@@ -420,6 +420,11 @@ urlpatterns = [
     path('email_saleorder/<int:id>', views.email_saleorder, name='email_saleorder'),
     
     re_path(r'^static/(?P<path>.*)$', serve,{'document_root': settings.STATIC_ROOT}),
+
+    #--------------------------Anitta----------------------------------
+    path('allparties',views.allparties,name='allparties'),
+    path('sale_purchaseby_party',views.sale_purchaseby_party,name='sale_purchaseby_party'),
+    path('sale_order_item',views.sale_order_item,name='sale_order_item'),
     
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

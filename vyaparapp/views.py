@@ -9867,3 +9867,23 @@ def email_saleorder(request,id):
     email.send(fail_silently=False)
     # msg = messages.success(request, 'Debit note file has been shared via email successfully..!')
     return redirect(saleorder_view,id)
+  
+#---------------------------------(Anitta-START)---------------------------------------------
+def allparties(request):
+  sid = request.session.get('staff_id')
+  staff =  staff_details.objects.get(id=sid)
+  cid= staff.company.id
+  parties=party.objects.filter(company_id=cid)
+  return render(request,'company/allparties.html',{'staff':staff,'parties':parties})
+def sale_purchaseby_party(request):
+  sid = request.session.get('staff_id')
+  staff =  staff_details.objects.get(id=sid)
+  cid= staff.company.id
+  sales=SalesInvoice.objects.filter(company_id=cid)
+  items = sales.values('party_name').annotate(grandtotal_sum=Sum('grandtotal')).order_by('party_name')
+  return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'items':items})
+def sale_order_item(request):
+  sid = request.session.get('staff_id')
+  staff =  staff_details.objects.get(id=sid)
+  return render(request,'company/sale_order_item.html',{'staff':staff})
+
