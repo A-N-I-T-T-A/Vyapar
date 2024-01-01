@@ -9875,15 +9875,68 @@ def allparties(request):
   cid= staff.company.id
   parties=party.objects.filter(company_id=cid)
   return render(request,'company/allparties.html',{'staff':staff,'parties':parties})
+
+def send_allparties_via_mail(request):
+  if request.method == 'POST':
+    emails=request.POST['email']
+    mess=request.POST['message']
+    uploaded_file = request.FILES.get('file')
+    if uploaded_file and uploaded_file.name.endswith('.pdf'):
+      subject = 'PDF Report'
+      message = mess
+      email = EmailMessage(subject, message, to=[emails])
+      email.attach(uploaded_file.name, uploaded_file.read(), 'application/pdf')
+      email.send()
+      messages.success(request, 'All parties report file has been shared via email successfully..!')
+      return redirect('allparties')
+    else:
+      messages.success(request, '!Invalid pdf')
+      return redirect('allparties')
+  return redirect('allparties')
+
+
 def sale_purchaseby_party(request):
   sid = request.session.get('staff_id')
   staff =  staff_details.objects.get(id=sid)
   cid= staff.company.id
-  sales=SalesInvoice.objects.filter(company_id=cid)
-  items = sales.values('party_name').annotate(grandtotal_sum=Sum('grandtotal')).order_by('party_name')
-  return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'items':items})
+  parties=party.objects.filter(company_id=cid)
+  results = []
+  totalS=0
+
+  parties = party.objects.all()
+
+  if parties.exists():
+    for part in parties:
+      sale_amount = SalesInvoice.objects.filter(party_name=part.party_name).aggregate(total=Sum('grandtotal'))['total'] or 0
+      purchase_amount = PurchaseBill.objects.filter(party=part).aggregate(total=Sum('grandtotal'))['total'] or 0
+      results.append({
+          'party_name': part.party_name,
+          'sale_amount': sale_amount,
+          'purchase_amount': purchase_amount,
+      })
+  else:
+      results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+  return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'parties':results,'total':totalS})
 def sale_order_item(request):
   sid = request.session.get('staff_id')
   staff =  staff_details.objects.get(id=sid)
-  return render(request,'company/sale_order_item.html',{'staff':staff})
+  cid= staff.company.id
+  items=ItemModel.objects.filter(company_id=cid)
+  results = []
+
+  if items.exists():
+    for part in items:
+      qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
+      price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
+      results.append({
+          'party_name': part.item_name,
+          'sale_amount': qty,
+          'purchase_amount': price,
+      })
+  else:
+    results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+  
+  return render(request,'company/sale_order_item.html',{'staff':staff,'items':results})
+
+
 

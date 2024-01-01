@@ -293,15 +293,36 @@
 
                             </thead>
                             <tbody>
-                                {% for i in items %}
+                                {% for result in parties %}
                                     <tr>
                                         <td>{{forloop.counter}}</td>
-                                        <td>{{i.party_name}}</td>
-                                        <td>{{i.grandtotal_sum}}</td>
-                                        <td>---</td>
+                                        <td>{{ result.party_name }}</td>
+                                        <td>{{ result.sale_amount }}</td>
+                                        <td>{{ result.purchase_amount }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
+                            <tfoot>
+                                <td colspan="2">Total</td>
+                                <td><script>
+                                    var sumSaleAmount = 0;
+                                    var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
+                                    saleAmountCells.forEach(function(cell) {
+                                        sumSaleAmount += parseFloat(cell.textContent);
+                                    });
+                                    document.write(sumSaleAmount.toFixed(2));
+                                </script></td>
+                                <td>
+                                    <script>
+                                        var sumPurchaseAmount = 0;
+                                        var purchaseAmountCells = document.querySelectorAll('td:nth-child(4)');
+                                        purchaseAmountCells.forEach(function(cell) {
+                                            sumPurchaseAmount += parseFloat(cell.textContent);
+                                        });
+                                        document.write(sumPurchaseAmount.toFixed(2));
+                                    </script>
+                                </td>
+                            </tfoot>
                         </table>
 
 
@@ -325,15 +346,13 @@
                                 <th>Purchase Amount</th>
                             </thead>
                             <tbody>
-                              
-                                {% for i in items %}
-                                <tr>
-                                    <td style="width: auto;"></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                    
+                                {% for result in parties  %}
+                                    <tr>
+                                        <td>{{forloop.counter}}</td>
+                                        <td>{{ result.party_name }}</td>
+                                        <td>{{ result.sale_amount }}</td>
+                                        <td>{{ result.purchase_amount }}</td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                             <tfoot>
@@ -360,13 +379,13 @@
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 <script>
     {% for msg in messages %}
-    swal({
-    title: "{{msg}}",
-    text: "{{msg.tags}}",
-    icon: "{{msg.tags}}",
-  });
+        swal({
+        title: "{{msg}}",
+        text: "{{msg.tags}}",
+        icon: "{{msg.tags}}",
+    });
     {% endfor %}
-   </script>
+</script>
 <script>
     $(document).ready(function () {
         $('.apply-filter').on('click', function () {
@@ -496,6 +515,7 @@ $('#in1').on('change', function () {
     document.getElementById("sdate").innerHTML = String(startDate.toLocaleDateString()) +  ' TO ';
     document.getElementById("s1date").innerHTML =String(startDate.toLocaleDateString()) + ' TO ';
     ''
+    
     for (var i = 1; i < rows.length; i++) {
         var row = rows[i];
         var prow2 = prow[i];
@@ -560,7 +580,7 @@ function exportAsExcel() {
     const table = document.getElementById('myTable1'); // Replace 'myTable' with your table's ID
     const wb = XLSX.utils.table_to_book(table);
 
-    XLSX.writeFile(wb, 'purchasereport.xlsx');
+    XLSX.writeFile(wb, 'salepurchasebypartyreport.xlsx');
     location.reload();
 }
 </script>
@@ -578,7 +598,7 @@ function exportAsExcel() {
             var opt =
             {
                 margin: 0.5,
-                filename: 'Purchase report' + '.pdf',
+                filename: 'Sale purchase by party report' + '.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 4 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', }

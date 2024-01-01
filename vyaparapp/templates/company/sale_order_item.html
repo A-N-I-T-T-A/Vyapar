@@ -290,28 +290,41 @@
 
                                     </div>
                                 </th>
+                                <th hidden>date</th>
 
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>dsa</td>
-                                    <td>dshdf</td>
-                                    <td>sfjhdg</td>
-                                </tr>
-                                <tr>
-                                    <td>2</td>
-                                    <td>abcd</td>
-                                    <td>dsad</td>
-                                    <td>sfjhdg</td>
-                                </tr>
+                                {% for result in items %}
+                                    <tr>
+                                        <td>{{forloop.counter}}</td>
+                                        <td>{{ result.party_name }}</td>
+                                        <td>{{ result.sale_amount }}</td>
+                                        <td>{{ result.purchase_amount }}</td>
+                                    </tr>
+                                {% endfor %}
                                 
                             </tbody>
                             <tfoot>
                                 <tr>
                                     <td colspan="2" class="text-center">Total</td>
-                                    <td></td>
-                                    <td></td>
+                                    <td><script>
+                                        var sumQty = 0;
+                                        var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
+                                        saleAmountCells.forEach(function(cell) {
+                                            sumQty += parseFloat(cell.textContent);
+                                        });
+                                        document.write(sumQty.toFixed());
+                                        </script>
+                                    </td>
+                                    <td><script>
+                                        var sumQty = 0;
+                                        var saleAmountCells = document.querySelectorAll('td:nth-child(4)');
+                                        saleAmountCells.forEach(function(cell) {
+                                            sumQty += parseFloat(cell.textContent);
+                                        });
+                                        document.write(sumQty.toFixed());
+                                        </script>
+                                    </td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -335,19 +348,40 @@
                                 <th>Item&nbsp;Name</th>
                                 <th>Quantity</th>
                                 <th>Amount</th>
+                                <th hidden>date</th>
                             </thead>
                             <tbody>
                               
-                                {% for i in debit %}
-                                <tr>
-                                    <td style="width: auto;"></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                    
+                                {% for result in items %}
+                                    <tr>
+                                        <td>{{forloop.counter}}</td>
+                                        <td>{{ result.party_name }}</td>
+                                        <td>{{ result.sale_amount }}</td>
+                                        <td>{{ result.purchase_amount }}</td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <script>
+                                        var sumQty = 0;
+                                        var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
+                                        saleAmountCells.forEach(function(cell) {
+                                            sumQty += parseFloat(cell.textContent);
+                                        });
+                                        document.getElementById('totalQty').textContent = sumQty.toFixed();
+                                        var sumQty = 0;
+                                        var saleAmountCells = document.querySelectorAll('td:nth-child(4)');
+                                        saleAmountCells.forEach(function(cell) {
+                                            sumQty += parseFloat(cell.textContent);
+                                        });
+                                        document.getElementById('totalSum').textContent = sumQty.toFixed();
+                                    </script>
+                                    <td colspan="2" class="text-center">Total</td>
+                                    <td id="totalQty"></td>
+                                    <td id="totalsum"></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>

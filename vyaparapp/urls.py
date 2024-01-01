@@ -425,7 +425,9 @@ urlpatterns = [
     path('allparties',views.allparties,name='allparties'),
     path('sale_purchaseby_party',views.sale_purchaseby_party,name='sale_purchaseby_party'),
     path('sale_order_item',views.sale_order_item,name='sale_order_item'),
+    path('send_allparties_via_mail',views.send_allparties_via_mail,name='send_allparties_via_mail'),
     
+
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
