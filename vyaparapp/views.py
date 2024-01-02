@@ -9901,7 +9901,6 @@ def sale_purchaseby_party(request):
   cid= staff.company.id
   parties=party.objects.filter(company_id=cid)
   results = []
-  totalS=0
 
   parties = party.objects.all()
 
@@ -9916,7 +9915,10 @@ def sale_purchaseby_party(request):
       })
   else:
       results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
-  return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'parties':results,'total':totalS})
+  total_sale_amount = int(sum(result['sale_amount'] for result in results))
+  total_purchase_amount = int(sum(result['purchase_amount'] for result in results))
+  return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'parties':results,'totalS':total_sale_amount,'totalP':total_purchase_amount})
+
 def sale_order_item(request):
   sid = request.session.get('staff_id')
   staff =  staff_details.objects.get(id=sid)
@@ -9935,8 +9937,78 @@ def sale_order_item(request):
       })
   else:
     results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+  total_Q = int(sum(result['sale_amount'] for result in results))
+  total_P = int(sum(result['purchase_amount'] for result in results))
+  return render(request,'company/sale_order_item.html',{'staff':staff,'items':results,'totalQ':total_Q,'totalP':total_P})
+
+
+
+def your_view1(request):
+  if request.method == 'GET':
+    from_date = request.GET.get('startD')
+    to_date = request.GET.get('endD')
+    date_obj1 = datetime.strptime(from_date, '%a %b %d %Y')
+    date_obj2 = datetime.strptime(to_date, '%a %b %d %Y')
+    startD = date_obj1.strftime("%Y-%m-%d")
+    toD=date_obj2.strftime("%Y-%m-%d")
+    print(startD)
+    print(toD)
+    sid = request.session.get('staff_id')
+    staff =  staff_details.objects.get(id=sid)
+    cid= staff.company.id
+    parties=party.objects.filter(company_id=cid)
+    results = []
+
+    parties = party.objects.all()
+
+    if parties.exists():
+      for part in parties:
+        sale_amount = SalesInvoice.objects.filter(party_name=part.party_name,date__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+        purchase_amount = PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+        results.append({
+            'party_name': part.party_name,
+            'sale_amount': sale_amount,
+            'purchase_amount': purchase_amount,
+      })
+    else:
+      results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+
+    print(results)
+    
+    return JsonResponse({'parties': results})
+  else:
+    return HttpResponse(status=400)
   
-  return render(request,'company/sale_order_item.html',{'staff':staff,'items':results})
 
-
+def your_view2(request):
+  if request.method == 'GET':
+    from_date = request.GET.get('startD')
+    to_date = request.GET.get('endD')
+    date_obj1 = datetime.strptime(from_date, '%a %b %d %Y')
+    date_obj2 = datetime.strptime(to_date, '%a %b %d %Y')
+    startD = date_obj1.strftime("%Y-%m-%d")
+    toD=date_obj2.strftime("%Y-%m-%d")
+    print(startD)
+    print(toD)
+    sid = request.session.get('staff_id')
+    staff =  staff_details.objects.get(id=sid)
+    cid= staff.company.id
+    items=ItemModel.objects.filter(company_id=cid)
+    results = []
+    if items.exists():
+      for part in items:
+        qty = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('qty'))['total'] or 0
+        price = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('price'))['total'] or 0
+        results.append({
+            'party_name': part.item_name,
+            'sale_amount': qty,
+            'purchase_amount': price,
+        })
+    else:
+      results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+    print(results)
+    return JsonResponse({'parties': results})
+  else:
+    return HttpResponse(status=400)
+  
 

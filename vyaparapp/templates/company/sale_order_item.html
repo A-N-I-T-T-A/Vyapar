@@ -290,8 +290,6 @@
 
                                     </div>
                                 </th>
-                                <th hidden>date</th>
-
                             </thead>
                             <tbody>
                                 {% for result in items %}
@@ -304,31 +302,7 @@
                                 {% endfor %}
                                 
                             </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="2" class="text-center">Total</td>
-                                    <td><script>
-                                        var sumQty = 0;
-                                        var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
-                                        saleAmountCells.forEach(function(cell) {
-                                            sumQty += parseFloat(cell.textContent);
-                                        });
-                                        document.write(sumQty.toFixed());
-                                        </script>
-                                    </td>
-                                    <td><script>
-                                        var sumQty = 0;
-                                        var saleAmountCells = document.querySelectorAll('td:nth-child(4)');
-                                        saleAmountCells.forEach(function(cell) {
-                                            sumQty += parseFloat(cell.textContent);
-                                        });
-                                        document.write(sumQty.toFixed());
-                                        </script>
-                                    </td>
-                                </tr>
-                            </tfoot>
                         </table>
-
 
                     </div>
                     <div id="content" style="display:none;">
@@ -362,30 +336,17 @@
                                 {% endfor %}
                             </tbody>
                             <tfoot>
-                                <tr>
-                                    <script>
-                                        var sumQty = 0;
-                                        var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
-                                        saleAmountCells.forEach(function(cell) {
-                                            sumQty += parseFloat(cell.textContent);
-                                        });
-                                        document.getElementById('totalQty').textContent = sumQty.toFixed();
-                                        var sumQty = 0;
-                                        var saleAmountCells = document.querySelectorAll('td:nth-child(4)');
-                                        saleAmountCells.forEach(function(cell) {
-                                            sumQty += parseFloat(cell.textContent);
-                                        });
-                                        document.getElementById('totalSum').textContent = sumQty.toFixed();
-                                    </script>
-                                    <td colspan="2" class="text-center">Total</td>
-                                    <td id="totalQty"></td>
-                                    <td id="totalsum"></td>
-                                </tr>
+                                <td colspan="2" style="color: black;">Total&nbsp; Quantity:</td>
+                                <td colspan="2" style="color: black;text-align: right;">Total&nbsp; Price:</td>
                             </tfoot>
                         </table>
                     </div>
                 </div>
                     </div>
+                </div>
+                <div class="card-footer" style="display: flex;">
+                    <div class="total-payable"><p style="color: black;">Total&nbsp; Quantity: <span id="sale">{{totalQ}}</span></p> </div>
+                    <div class="total-receivable"><p style="color: black;">Total&nbsp; Price:<span id="purchase">{{totalP}}</span></p></div>
                 </div>
             </div>
         </div>
@@ -534,28 +495,52 @@ $('#in1').on('change', function () {
     document.getElementById("sdate").innerHTML = String(startDate.toLocaleDateString()) +  ' TO ';
     document.getElementById("s1date").innerHTML =String(startDate.toLocaleDateString()) + ' TO ';
     ''
-    for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        var prow2 = prow[i];
-        var dateCell = row.cells[0];
-        var rowDate = new Date(dateCell.textContent);
+    $.ajax({
 
-        if ((rowDate >= startDate) || (rowDate <= endDate && rowDate >= startDate)) {
-            row.style.display = "";
-            prow2.style.display ="";
+        type: 'GET',
+        url: "{% url 'your_view2' %}",
 
-        } else {
-            row.style.display = "none";
-            prow2.style.display ="none";
+        data: {
+            startD: startDate.toDateString(),
+            endD: endDate.toDateString() ,
 
-        }
-    }
-    calculatetotal()
+            csrfmiddlewaretoken: '{{ csrf_token }}'
 
+        },
 
-    // var tdate = new Date(fromDate)
-    // var options = { year: 'numeric', month: 'long', day: 'numeric' };
-    // document.getElementById("d1").innerHTML = tdate.toLocaleDateString(undefined, options);
+        success: function(response) {
+        console.log(response); // logs the JSON response
+        var parties = response.parties;
+        var total1=0
+        var total2=0
+        var total3=0
+        var total4=0
+        $('#myTable tbody').empty();
+        $('#myTable1 tbody').empty();
+        $('#myTable1 tfoot').empty();
+        // Use jQuery to loop through the parties array and create a new table row for each party
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total1=total1+party.sale_amount;
+            total2=total2+party.purchase_amount;
+            $('#myTable tbody').append(newRow);
+        });
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total3=total1+party.sale_amount;
+            total4=total2+party.purchase_amount;
+            
+            $('#myTable1 tbody').append(newRow);
+        });
+        var newRow1 = $('<tr><td colspan="2">'+'Total' +'</td><td>' +total3 + '</td><td>' + total4 + '</td></tr>');
+        $('#myTable1 tfoot').append(newRow1);
+        document.getElementById("sale").innerHTML = total1;
+        document.getElementById("purchase").innerHTML = total2;
+        },
+
+    });
 
 });
 
@@ -570,26 +555,52 @@ $('#in2').on('change', function () {
     var prow =table2.getElementsByTagName("tr")
     document.getElementById("edate").innerHTML = endDate.toLocaleDateString();
     document.getElementById("e1date").innerHTML = endDate.toLocaleDateString();
-    for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        var prow2 =prow[i];
-        var dateCell = row.cells[0];
-        var rowDate = new Date(dateCell.textContent);
-        if (rowDate <= endDate && rowDate >= startDate) {
-            row.style.display = "";
-            prow2.style.display = "";
+    $.ajax({
 
-        } else {
-            row.style.display = "none";
-            prow2.style.display = "none";
+        type: 'GET',
+        url: "{% url 'your_view2' %}",
 
-        }
-    }
-    calculatetotal()
-    // var tdate = new Date(toDate)
-    // var options = { year: 'numeric', month: 'long', day: 'numeric' };
-    // document.getElementById("d2").innerHTML = "  To  " + tdate.toLocaleDateString(undefined, options);
+        data: {
+            startD: startDate.toDateString(),
+            endD: endDate.toDateString() ,
 
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+
+        },
+
+        success: function(response) {
+        console.log(response); // logs the JSON response
+        var parties = response.parties;
+        var total1=0
+        var total2=0
+        var total3=0
+        var total4=0
+        $('#myTable tbody').empty();
+        $('#myTable1 tbody').empty();
+        $('#myTable1 tfoot').empty();
+        // Use jQuery to loop through the parties array and create a new table row for each party
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total1=total1+party.sale_amount;
+            total2=total2+party.purchase_amount;
+            $('#myTable tbody').append(newRow);
+        });
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total3=total1+party.sale_amount;
+            total4=total2+party.purchase_amount;
+            
+            $('#myTable1 tbody').append(newRow);
+        });
+        var newRow1 = $('<tr><td colspan="2">'+'Total' +'</td><td>' +total3 + '</td><td>' + total4 + '</td></tr>');
+        $('#myTable1 tfoot').append(newRow1);
+        document.getElementById("sale").innerHTML = total1;
+        document.getElementById("purchase").innerHTML = total2;
+        },
+
+    });
 })
 
 function exportAsExcel() {

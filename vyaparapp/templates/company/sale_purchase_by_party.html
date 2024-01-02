@@ -75,7 +75,7 @@
                                 </div>
                                 <div class="px-2">
                                     <label style="text-align:left ">To</label><br>
-                                    <input name="ToDate" class="inputdate form-control" type="date" id="in2">
+                                    <input name="ToDate" class="inputdate form-control" type="date" id="in2" >
                                 </div>
                             </div>
                             <div class=" card-group">
@@ -302,27 +302,6 @@
                                     </tr>
                                 {% endfor %}
                             </tbody>
-                            <tfoot>
-                                <td colspan="2">Total</td>
-                                <td><script>
-                                    var sumSaleAmount = 0;
-                                    var saleAmountCells = document.querySelectorAll('td:nth-child(3)');
-                                    saleAmountCells.forEach(function(cell) {
-                                        sumSaleAmount += parseFloat(cell.textContent);
-                                    });
-                                    document.write(sumSaleAmount.toFixed(2));
-                                </script></td>
-                                <td>
-                                    <script>
-                                        var sumPurchaseAmount = 0;
-                                        var purchaseAmountCells = document.querySelectorAll('td:nth-child(4)');
-                                        purchaseAmountCells.forEach(function(cell) {
-                                            sumPurchaseAmount += parseFloat(cell.textContent);
-                                        });
-                                        document.write(sumPurchaseAmount.toFixed(2));
-                                    </script>
-                                </td>
-                            </tfoot>
                         </table>
 
 
@@ -356,17 +335,17 @@
                                 {% endfor %}
                             </tbody>
                             <tfoot>
-                                <td colspan="2" style="color: black;">Total&nbsp; Payable:</td>
-                                <td colspan="2" style="color: black;text-align: right;">Total&nbsp; Receviable:</td>
+                                <td colspan="2" style="color: black;">Total&nbsp; Sale Amount: <span id="sale1"></span></td>
+                                <td colspan="2" style="color: black;text-align: right;">Total&nbsp; Purchase Amount:<span id="purchase1"></span></td>
                             </tfoot>
                         </table>
+                        </div>
                     </div>
-                </div>
                     </div>
                 </div>
                 <div class="card-footer" style="display: flex;">
-                    <div class="total-payable"><p style="color: black;">Total&nbsp; Sale Amount:</p> </div>
-                    <div class="total-receivable"><p style="color: black;">Total&nbsp; Purchase Amount:</p></div>
+                    <div class="total-payable"><p style="color: black;">Total&nbsp; Sale Amount: <span id="sale">{{totalS}}</span></p> </div>
+                    <div class="total-receivable"><p style="color: black;">Total&nbsp; Purchase Amount:<span id="purchase">{{totalP}}</span></p></div>
                 </div>
             </div>
         </div>
@@ -377,6 +356,7 @@
    
 </div>
 <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
     {% for msg in messages %}
         swal({
@@ -516,24 +496,52 @@ $('#in1').on('change', function () {
     document.getElementById("s1date").innerHTML =String(startDate.toLocaleDateString()) + ' TO ';
     ''
     
-    for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        var prow2 = prow[i];
-        var dateCell = row.cells[0];
-        var rowDate = new Date(dateCell.textContent);
+    $.ajax({
 
-        if ((rowDate >= startDate) || (rowDate <= endDate && rowDate >= startDate)) {
-            row.style.display = "";
-            prow2.style.display ="";
+        type: 'GET',
+        url: "{% url 'your_view1' %}",
 
-        } else {
-            row.style.display = "none";
-            prow2.style.display ="none";
+        data: {
+            startD: startDate.toDateString(),
+            endD: endDate.toDateString() ,
 
-        }
-    }
-    calculatetotal()
+            csrfmiddlewaretoken: '{{ csrf_token }}'
 
+        },
+
+        success: function(response) {
+        console.log(response); // logs the JSON response
+        var parties = response.parties;
+        var total1=0
+        var total2=0
+        var total3=0
+        var total4=0
+        $('#myTable tbody').empty();
+        $('#myTable1 tbody').empty();
+        $('#myTable1 tfoot').empty();
+        // Use jQuery to loop through the parties array and create a new table row for each party
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total1=total1+party.sale_amount;
+            total2=total2+party.purchase_amount;
+            $('#myTable tbody').append(newRow);
+        });
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total3=total1+party.sale_amount;
+            total4=total2+party.purchase_amount;
+            
+            $('#myTable1 tbody').append(newRow);
+        });
+        var newRow1 = $('<tr><td colspan="2">'+'Total' +'</td><td>' +total3 + '</td><td>' + total4 + '</td></tr>');
+        $('#myTable1 tfoot').append(newRow1);
+        document.getElementById("sale").innerHTML = total1;
+        document.getElementById("purchase").innerHTML = total2;
+        },
+
+    });
 
     // var tdate = new Date(fromDate)
     // var options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -552,22 +560,68 @@ $('#in2').on('change', function () {
     var prow =table2.getElementsByTagName("tr")
     document.getElementById("edate").innerHTML = endDate.toLocaleDateString();
     document.getElementById("e1date").innerHTML = endDate.toLocaleDateString();
-    for (var i = 1; i < rows.length; i++) {
-        var row = rows[i];
-        var prow2 =prow[i];
-        var dateCell = row.cells[0];
-        var rowDate = new Date(dateCell.textContent);
-        if (rowDate <= endDate && rowDate >= startDate) {
-            row.style.display = "";
-            prow2.style.display = "";
+    $.ajax({
 
-        } else {
-            row.style.display = "none";
-            prow2.style.display = "none";
+        type: 'GET',
+        url: "{% url 'your_view1' %}",
 
-        }
-    }
-    calculatetotal()
+        data: {
+            startD: startDate.toDateString(),
+            endD: endDate.toDateString() ,
+
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+
+        },
+
+        success: function(response) {
+        console.log(response); // logs the JSON response
+        var parties = response.parties;
+        var total1=0
+        var total2=0
+        var total3=0
+        var total4=0
+        $('#myTable tbody').empty();
+        $('#myTable1 tbody').empty();
+        $('#myTable1 tfoot').empty();
+        // Use jQuery to loop through the parties array and create a new table row for each party
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total1=total1+party.sale_amount;
+            total2=total2+party.purchase_amount;
+            $('#myTable tbody').append(newRow);
+        });
+        $.each(parties, function(i, party) {
+            i=i+1
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
+            total3=total1+party.sale_amount;
+            total4=total2+party.purchase_amount;
+            
+            $('#myTable1 tbody').append(newRow);
+        });
+        var newRow1 = $('<tr><td colspan="2">'+'Total' +'</td><td>' +total3 + '</td><td>' + total4 + '</td></tr>');
+        $('#myTable1 tfoot').append(newRow1);
+        document.getElementById("sale").innerHTML = total1;
+        document.getElementById("purchase").innerHTML = total2;
+    },
+
+    });
+    // for (var i = 1; i < rows.length; i++) {
+    //     var row = rows[i];
+    //     var prow2 =prow[i];
+    //     var dateCell = row.cells[0];
+    //     var rowDate = new Date(dateCell.textContent);
+    //     if (rowDate <= endDate && rowDate >= startDate) {
+    //         row.style.display = "";
+    //         prow2.style.display = "";
+
+    //     } else {
+    //         row.style.display = "none";
+    //         prow2.style.display = "none";
+
+    //     }
+    // }
+    // calculatetotal()
     // var tdate = new Date(toDate)
     // var options = { year: 'numeric', month: 'long', day: 'numeric' };
     // document.getElementById("d2").innerHTML = "  To  " + tdate.toLocaleDateString(undefined, options);
@@ -653,6 +707,29 @@ function exportAsExcel() {
         document.getElementById('unpaidval1').textContent = tunpaid
         document.getElementById('totalval1').textContent = ttotal
     }
+
+//     (document).ready(function () {
+//         $("#in2").change(function () {
+
+//             $.ajax({
+
+//                 type: 'GET',
+//                 url: "{% url 'your_view1' %}",
+
+//                 data: {
+//                     startD: $("#in1").val(),
+//                     endD: $("#in2").val(),
+
+//                     csrfmiddlewaretoken: '{{ csrf_token }}'
+
+//                 },
+
+//                 success: function (response) {
+//                     document.getElementById("myTable").reset();
+//                 },
+//             });
+//         });
+//     });
 </script>
 
 {% endblock %}
