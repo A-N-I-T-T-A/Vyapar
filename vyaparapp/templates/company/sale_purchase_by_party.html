@@ -119,21 +119,21 @@
                     
                     </div>
                     <div class="modal-body">
-                      <form method="post" action="{% url 'send_purchase_report_via_mail' %}"    id="email" enctype="multipart/form-data">
+                      <form method="post" action="{% url 'sharesalepurchasebypartyToEmail' %}"    id="email" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <input type="hidden" name="from_date" id="from_date" value="">
+                        <input type="hidden" name="to_date" id="to_date" value="">
                         <div class="form-group">
                             <lable>Mail id</lable>
-                            <input type="mail" name='email' required class="form-control" id="message">
+                            <textarea class="form-control text-dark" name="email" id="email" rows="5"
+                            placeholder="Multiple emails can be added by separating with a comma(,)." required></textarea>
                         </div>
                         <div class="form-group">
                             <lable>Message</lable>
-                            <input type="text"  name="message" required class="form-control">
+                            <textarea name="message" id="message" class="text-dark form-control" cols=""
+                            rows="4" placeholder="This message will be sent along with purchase order details."></textarea>
                         </div>
-                        <div class="form-group">
-                            <lable>Choose File(*.pdf)</lable>
-                            <input type="file"  name="file" required class="form-control"  title="pdf files only">
-                        </div>
-                        <button type="submit" class=" btn  btn-primary mx-auto d-block">Share</button>
+                        <button type="submit" class=" btn  btn-primary mx-auto d-block mt-4">Share</button>
                       </form>
                     </div>
                     <div class="modal-footer">
@@ -237,8 +237,6 @@
                                                 <button class="btn apply-filter btn-sm btn-secondary">Apply</button>
                                                 <button
                                                     class="btn clear-filter btn-sm  btn-secondary">Clear</button>
-                                            
-
                                         </div>
 
                                     </div>
@@ -335,8 +333,9 @@
                                 {% endfor %}
                             </tbody>
                             <tfoot>
-                                <td colspan="2" style="color: black;">Total&nbsp; Sale Amount: <span id="sale1"></span></td>
-                                <td colspan="2" style="color: black;text-align: right;">Total&nbsp; Purchase Amount:<span id="purchase1"></span></td>
+                                <td colspan="2">Total</td>
+                                <td><span id="sale1">{{totalS}}</span></td>
+                                <td><span id="purchase1">{{totalP}}</span></td>
                             </tfoot>
                         </table>
                         </div>
@@ -495,11 +494,12 @@ $('#in1').on('change', function () {
     document.getElementById("sdate").innerHTML = String(startDate.toLocaleDateString()) +  ' TO ';
     document.getElementById("s1date").innerHTML =String(startDate.toLocaleDateString()) + ' TO ';
     ''
-    
+    document.getElementById("from_date").value = startDate.toDateString();
+    document.getElementById("to_date").value = endDate.toDateString();
     $.ajax({
 
         type: 'GET',
-        url: "{% url 'your_view1' %}",
+        url: "{% url 'sale_purchaseby_party_filter' %}",
 
         data: {
             startD: startDate.toDateString(),
@@ -560,10 +560,12 @@ $('#in2').on('change', function () {
     var prow =table2.getElementsByTagName("tr")
     document.getElementById("edate").innerHTML = endDate.toLocaleDateString();
     document.getElementById("e1date").innerHTML = endDate.toLocaleDateString();
+    document.getElementById("from_date").value = startDate.toDateString();
+    document.getElementById("to_date").value = endDate.toDateString();
     $.ajax({
 
         type: 'GET',
-        url: "{% url 'your_view1' %}",
+        url: "{% url 'sale_purchaseby_party_filter' %}",
 
         data: {
             startD: startDate.toDateString(),
@@ -662,74 +664,6 @@ function exportAsExcel() {
     
 }
 
-
-</script>
-<script>
-    calculatetotal()
-
-    function calculatetotal(){
-        var table = document.getElementById('myTable');
-        var rows = table.getElementsByTagName('tr');
-        tpaid = 0;
-        tunpaid = 0;
-        ttotal = 0; 
-        for (var i = 1; i < rows.length; i++) {
-            if(rows[i].style.display !='none'){
-
-                var ucells = rows[i].getElementsByTagName('td')[6];
-                var uamount = rows[i].getElementsByTagName('td')[3];
-                var uvalue = uamount.textContent || uamount.innerText;
-                var utextValue = ucells.textContent || ucells.innerText;
-                if(uvalue == 'bill'){
-                tunpaid += parseFloat(utextValue)
-                }
-                if(uvalue == 'debit note'){
-                tunpaid -= parseFloat(utextValue)
-                }
-               
-                var tcells = rows[i].getElementsByTagName('td')[5];
-                var uamount = rows[i].getElementsByTagName('td')[3];
-                var uvalue = uamount.textContent || uamount.innerText;
-                var ttextValue = tcells.textContent || tcells.innerText;
-                if(uvalue == 'bill'){
-                    ttotal += parseFloat(ttextValue)
-                }
-                if(uvalue == 'debit note'){
-                    ttotal -= parseFloat(ttextValue)
-                }
-               
-            }
-        }
-        document.getElementById('paidval').textContent = ttotal-tunpaid
-        document.getElementById('unpaidval').textContent = tunpaid
-        document.getElementById('totalval').textContent = ttotal
-        document.getElementById('paidval1').textContent = ttotal-tunpaid
-        document.getElementById('unpaidval1').textContent = tunpaid
-        document.getElementById('totalval1').textContent = ttotal
-    }
-
-//     (document).ready(function () {
-//         $("#in2").change(function () {
-
-//             $.ajax({
-
-//                 type: 'GET',
-//                 url: "{% url 'your_view1' %}",
-
-//                 data: {
-//                     startD: $("#in1").val(),
-//                     endD: $("#in2").val(),
-
-//                     csrfmiddlewaretoken: '{{ csrf_token }}'
-
-//                 },
-
-//                 success: function (response) {
-//                     document.getElementById("myTable").reset();
-//                 },
-//             });
-//         });
-//     });
 </script>
 
 {% endblock %}

@@ -119,22 +119,22 @@
                     
                     </div>
                     <div class="modal-body">
-                      <form method="post" action="{% url 'send_purchase_report_via_mail' %}"    id="email" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <lable>Mail id</lable>
-                            <input type="mail" name='email' required class="form-control" id="message">
-                        </div>
-                        <div class="form-group">
-                            <lable>Message</lable>
-                            <input type="text"  name="message" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <lable>Choose File(*.pdf)</lable>
-                            <input type="file"  name="file" required class="form-control"  title="pdf files only">
-                        </div>
-                        <button type="submit" class=" btn  btn-primary mx-auto d-block">Share</button>
-                      </form>
+                        <form method="post" action="{% url 'sharesaleorderitemToEmail' %}"    id="email" enctype="multipart/form-data">
+                          {% csrf_token %}
+                          <input type="hidden" name="from_date" id="from_date" value="">
+                          <input type="hidden" name="to_date" id="to_date" value="">
+                          <div class="form-group">
+                              <lable>Mail id</lable>
+                              <textarea class="form-control text-dark" name="email" id="email" rows="5"
+                              placeholder="Multiple emails can be added by separating with a comma(,)." required></textarea>
+                          </div>
+                          <div class="form-group">
+                              <lable>Message</lable>
+                              <textarea name="message" id="message" class="text-dark form-control" cols=""
+                              rows="4" placeholder="This message will be sent along with purchase order details."></textarea>
+                          </div>
+                          <button type="submit" class=" btn  btn-primary mx-auto d-block mt-4">Share</button>
+                        </form>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary "  data-dismiss="modal">Close</button>
@@ -295,9 +295,9 @@
                                 {% for result in items %}
                                     <tr>
                                         <td>{{forloop.counter}}</td>
-                                        <td>{{ result.party_name }}</td>
-                                        <td>{{ result.sale_amount }}</td>
-                                        <td>{{ result.purchase_amount }}</td>
+                                        <td>{{ result.item_name }}</td>
+                                        <td>{{ result.Quantity }}</td>
+                                        <td>{{ result.Price }}</td>
                                     </tr>
                                 {% endfor %}
                                 
@@ -322,22 +322,22 @@
                                 <th>Item&nbsp;Name</th>
                                 <th>Quantity</th>
                                 <th>Amount</th>
-                                <th hidden>date</th>
                             </thead>
                             <tbody>
                               
                                 {% for result in items %}
                                     <tr>
                                         <td>{{forloop.counter}}</td>
-                                        <td>{{ result.party_name }}</td>
-                                        <td>{{ result.sale_amount }}</td>
-                                        <td>{{ result.purchase_amount }}</td>
+                                        <td>{{ result.item_name }}</td>
+                                        <td>{{ result.Quantity }}</td>
+                                        <td>{{ result.Price }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                             <tfoot>
-                                <td colspan="2" style="color: black;">Total&nbsp; Quantity:</td>
-                                <td colspan="2" style="color: black;text-align: right;">Total&nbsp; Price:</td>
+                                <td colspan="2">Total</td>
+                                <td><span id="sale1">{{totalQ}}</span></td>
+                                <td><span id="purchase1">{{totalP}}</span></td>
                             </tfoot>
                         </table>
                     </div>
@@ -495,10 +495,12 @@ $('#in1').on('change', function () {
     document.getElementById("sdate").innerHTML = String(startDate.toLocaleDateString()) +  ' TO ';
     document.getElementById("s1date").innerHTML =String(startDate.toLocaleDateString()) + ' TO ';
     ''
+    document.getElementById("from_date").value = startDate.toDateString();
+    document.getElementById("to_date").value = endDate.toDateString();
     $.ajax({
 
         type: 'GET',
-        url: "{% url 'your_view2' %}",
+        url: "{% url 'sale_order_item_filter' %}",
 
         data: {
             startD: startDate.toDateString(),
@@ -521,16 +523,16 @@ $('#in1').on('change', function () {
         // Use jQuery to loop through the parties array and create a new table row for each party
         $.each(parties, function(i, party) {
             i=i+1
-            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total1=total1+party.sale_amount;
-            total2=total2+party.purchase_amount;
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.item_name+ '</td><td>' + party.Quantity + '</td><td>' + party.Price + '</td></tr>');
+            total1=total1+party.Quantity;
+            total2=total2+party.Price;
             $('#myTable tbody').append(newRow);
         });
         $.each(parties, function(i, party) {
             i=i+1
-            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total3=total1+party.sale_amount;
-            total4=total2+party.purchase_amount;
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.item_name+ '</td><td>' + party.Quantity + '</td><td>' + party.Price + '</td></tr>');
+            total1=total1+party.Quantity;
+            total2=total2+party.Price;
             
             $('#myTable1 tbody').append(newRow);
         });
@@ -555,10 +557,13 @@ $('#in2').on('change', function () {
     var prow =table2.getElementsByTagName("tr")
     document.getElementById("edate").innerHTML = endDate.toLocaleDateString();
     document.getElementById("e1date").innerHTML = endDate.toLocaleDateString();
+    document.getElementById("from_date").value = startDate.toDateString();
+    document.getElementById("to_date").value = endDate.toDateString();
+
     $.ajax({
 
         type: 'GET',
-        url: "{% url 'your_view2' %}",
+        url: "{% url 'sale_order_item_filter' %}",
 
         data: {
             startD: startDate.toDateString(),
@@ -581,17 +586,16 @@ $('#in2').on('change', function () {
         // Use jQuery to loop through the parties array and create a new table row for each party
         $.each(parties, function(i, party) {
             i=i+1
-            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total1=total1+party.sale_amount;
-            total2=total2+party.purchase_amount;
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.item_name+ '</td><td>' + party.Quantity + '</td><td>' + party.Price + '</td></tr>');
+            total1=total1+party.Quantity;
+            total2=total2+party.Price;
             $('#myTable tbody').append(newRow);
         });
         $.each(parties, function(i, party) {
             i=i+1
-            var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total3=total1+party.sale_amount;
-            total4=total2+party.purchase_amount;
-            
+            var newRow = $('<tr><td>'+i + '</td><td>' + party.item_name+ '</td><td>' + party.Quantity + '</td><td>' + party.Price + '</td></tr>');
+            total3=total3+party.Quantity;
+            total4=total4+party.Price;     
             $('#myTable1 tbody').append(newRow);
         });
         var newRow1 = $('<tr><td colspan="2">'+'Total' +'</td><td>' +total3 + '</td><td>' + total4 + '</td></tr>');
@@ -609,7 +613,7 @@ function exportAsExcel() {
     const table = document.getElementById('myTable1'); // Replace 'myTable' with your table's ID
     const wb = XLSX.utils.table_to_book(table);
 
-    XLSX.writeFile(wb, 'purchasereport.xlsx');
+    XLSX.writeFile(wb, 'sale_order_item_report.xlsx');
     location.reload();
 }
 </script>
@@ -627,7 +631,7 @@ function exportAsExcel() {
             var opt =
             {
                 margin: 0.5,
-                filename: 'Purchase report' + '.pdf',
+                filename: 'sale_order_item_report' + '.pdf',
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 4 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', }
@@ -638,50 +642,6 @@ function exportAsExcel() {
 }
 
 
-</script>
-<script>
-    calculatetotal()
-
-    function calculatetotal(){
-        var table = document.getElementById('myTable');
-        var rows = table.getElementsByTagName('tr');
-        tpaid = 0;
-        tunpaid = 0;
-        ttotal = 0; 
-        for (var i = 1; i < rows.length; i++) {
-            if(rows[i].style.display !='none'){
-
-                var ucells = rows[i].getElementsByTagName('td')[6];
-                var uamount = rows[i].getElementsByTagName('td')[3];
-                var uvalue = uamount.textContent || uamount.innerText;
-                var utextValue = ucells.textContent || ucells.innerText;
-                if(uvalue == 'bill'){
-                tunpaid += parseFloat(utextValue)
-                }
-                if(uvalue == 'debit note'){
-                tunpaid -= parseFloat(utextValue)
-                }
-               
-                var tcells = rows[i].getElementsByTagName('td')[5];
-                var uamount = rows[i].getElementsByTagName('td')[3];
-                var uvalue = uamount.textContent || uamount.innerText;
-                var ttextValue = tcells.textContent || tcells.innerText;
-                if(uvalue == 'bill'){
-                    ttotal += parseFloat(ttextValue)
-                }
-                if(uvalue == 'debit note'){
-                    ttotal -= parseFloat(ttextValue)
-                }
-               
-            }
-        }
-        document.getElementById('paidval').textContent = ttotal-tunpaid
-        document.getElementById('unpaidval').textContent = tunpaid
-        document.getElementById('totalval').textContent = ttotal
-        document.getElementById('paidval1').textContent = ttotal-tunpaid
-        document.getElementById('unpaidval1').textContent = tunpaid
-        document.getElementById('totalval1').textContent = ttotal
-    }
 </script>
 
 {% endblock %}

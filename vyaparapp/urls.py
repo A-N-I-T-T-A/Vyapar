@@ -425,9 +425,11 @@ urlpatterns = [
     path('allparties',views.allparties,name='allparties'),
     path('sale_purchaseby_party',views.sale_purchaseby_party,name='sale_purchaseby_party'),
     path('sale_order_item',views.sale_order_item,name='sale_order_item'),
-    path('send_allparties_via_mail',views.send_allparties_via_mail,name='send_allparties_via_mail'),
-    path('your_view1',views.your_view1,name='your_view1'),
-    path('your_view2',views.your_view2,name='your_view2'),
+    path('sale_purchaseby_party_filter',views.sale_purchaseby_party_filter,name='sale_purchaseby_party_filter'),
+    path('sale_order_item_filter',views.sale_order_item_filter,name='sale_order_item_filter'),
+    path('sharesalepurchasebypartyToEmail',views.sharesalepurchasebypartyToEmail,name='sharesalepurchasebypartyToEmail'),
+    path('sharesaleorderitemToEmail',views.sharesaleorderitemToEmail,name='sharesaleorderitemToEmail'),
+    path('shareallpartiesToEmail',views.shareallpartiesToEmail,name='shareallpartiesToEmail'),
     
 
 ]

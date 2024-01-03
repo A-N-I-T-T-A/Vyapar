@@ -40,7 +40,7 @@ from django.db.models import Count
 from collections import defaultdict
 from .models import LoanAccounts, LoanHistory, party
 from datetime import datetime
-
+from openpyxl.styles import Font, Protection, Alignment
 # Create your views here.
 def home(request):
   return render(request, 'home.html')
@@ -9876,24 +9876,56 @@ def allparties(request):
   parties=party.objects.filter(company_id=cid)
   return render(request,'company/allparties.html',{'staff':staff,'parties':parties})
 
-def send_allparties_via_mail(request):
-  if request.method == 'POST':
-    emails=request.POST['email']
-    mess=request.POST['message']
-    uploaded_file = request.FILES.get('file')
-    if uploaded_file and uploaded_file.name.endswith('.pdf'):
-      subject = 'PDF Report'
-      message = mess
-      email = EmailMessage(subject, message, to=[emails])
-      email.attach(uploaded_file.name, uploaded_file.read(), 'application/pdf')
-      email.send()
-      messages.success(request, 'All parties report file has been shared via email successfully..!')
-      return redirect('allparties')
-    else:
-      messages.success(request, '!Invalid pdf')
-      return redirect('allparties')
-  return redirect('allparties')
+def shareallpartiesToEmail(request):
+  try:
+    if request.method == 'POST':
+        emails_string = request.POST['email']
+        emails_list = [email.strip() for email in emails_string.split(',')]
+        email_message = request.POST['message']
+        fromdate_str = request.POST['from_date']
+        todate_str = request.POST['to_date']
+        if fromdate_str and todate_str:
+          date_obj1 = datetime.strptime(fromdate_str, '%a %b %d %Y')
+          date_obj2 = datetime.strptime(todate_str, '%a %b %d %Y')
+          startD = date_obj1.strftime("%Y-%m-%d")
+          toD=date_obj2.strftime("%Y-%m-%d")
+          print(startD)
+          print(toD)
+          sid = request.session.get('staff_id')
+          staff =  staff_details.objects.get(id=sid)
+          cid= staff.company.id
+          parties=party.objects.filter(company_id=cid)
+          startDate=date_obj1.strftime("%m-%d-%Y")
+          endDate=date_obj2.strftime("%m-%d-%Y")
+          st=startDate+' '+'To'+' '+endDate
+          context = {'staff':staff,'parties':parties,'from':st}
+        else:
+          # print(emails_list)
+          sid = request.session.get('staff_id')
+          staff =  staff_details.objects.get(id=sid)
+          cid= staff.company.id
+          parties=party.objects.filter(company_id=cid)
+          context = {'staff':staff,'parties':parties}
+        cmp = company.objects.get(id=cid)
+        template_path = 'company/allparties_report_pdf.html'
+        template = get_template(template_path)
 
+        html  = template.render(context)
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)#, link_callback=fetch_resources)
+        pdf = result.getvalue()
+        filename = f'All parties Report - .pdf'
+        subject = f"All parties Report - "
+        email = EmailMessage(subject, f"Hi,\nPlease find the attached All parties Report . \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+        email.attach(filename, pdf, "application/pdf")
+        email.send(fail_silently=False)
+
+        messages.success(request, 'Report has been shared via email successfully..!')
+        return redirect('allparties')
+  except Exception as e:
+      print(e)
+      messages.error(request, f'{e}')
+      return redirect('allparties')
 
 def sale_purchaseby_party(request):
   sid = request.session.get('staff_id')
@@ -9919,31 +9951,7 @@ def sale_purchaseby_party(request):
   total_purchase_amount = int(sum(result['purchase_amount'] for result in results))
   return render(request,'company/sale_purchase_by_party.html',{'staff':staff,'parties':results,'totalS':total_sale_amount,'totalP':total_purchase_amount})
 
-def sale_order_item(request):
-  sid = request.session.get('staff_id')
-  staff =  staff_details.objects.get(id=sid)
-  cid= staff.company.id
-  items=ItemModel.objects.filter(company_id=cid)
-  results = []
-
-  if items.exists():
-    for part in items:
-      qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
-      price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
-      results.append({
-          'party_name': part.item_name,
-          'sale_amount': qty,
-          'purchase_amount': price,
-      })
-  else:
-    results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
-  total_Q = int(sum(result['sale_amount'] for result in results))
-  total_P = int(sum(result['purchase_amount'] for result in results))
-  return render(request,'company/sale_order_item.html',{'staff':staff,'items':results,'totalQ':total_Q,'totalP':total_P})
-
-
-
-def your_view1(request):
+def sale_purchaseby_party_filter(request):
   if request.method == 'GET':
     from_date = request.GET.get('startD')
     to_date = request.GET.get('endD')
@@ -9978,9 +9986,117 @@ def your_view1(request):
     return JsonResponse({'parties': results})
   else:
     return HttpResponse(status=400)
-  
 
-def your_view2(request):
+def sharesalepurchasebypartyToEmail(request):
+  try:
+      if request.method == 'POST':
+          emails_string = request.POST['email']
+          emails_list = [email.strip() for email in emails_string.split(',')]
+          email_message = request.POST['message']
+          fromdate_str = request.POST['from_date']
+          todate_str = request.POST['to_date']
+          if fromdate_str and todate_str:
+            date_obj1 = datetime.strptime(fromdate_str, '%a %b %d %Y')
+            date_obj2 = datetime.strptime(todate_str, '%a %b %d %Y')
+            startD = date_obj1.strftime("%Y-%m-%d")
+            toD=date_obj2.strftime("%Y-%m-%d")
+            print(startD)
+            print(toD)
+            sid = request.session.get('staff_id')
+            staff =  staff_details.objects.get(id=sid)
+            cid= staff.company.id
+            parties=party.objects.filter(company_id=cid)
+            results = []
+
+            parties = party.objects.all()
+
+            if parties.exists():
+              for part in parties:
+                sale_amount = SalesInvoice.objects.filter(party_name=part.party_name,date__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+                purchase_amount = PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+                results.append({
+                    'party_name': part.party_name,
+                    'sale_amount': sale_amount,
+                    'purchase_amount': purchase_amount,
+              })
+            else:
+              results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+
+            startDate=date_obj1.strftime("%m-%d-%Y")
+            endDate=date_obj2.strftime("%m-%d-%Y")
+            st=startDate+' '+'To'+' '+endDate
+            total_sale_amount = int(sum(result['sale_amount'] for result in results))
+            total_purchase_amount = int(sum(result['purchase_amount'] for result in results))
+            context = {'staff':staff,'parties':results,'totalS':total_sale_amount,'totalP':total_purchase_amount,'from':st}
+          else:
+            # print(emails_list)
+            sid = request.session.get('staff_id')
+            staff =  staff_details.objects.get(id=sid)
+            cid= staff.company.id
+            parties=party.objects.filter(company_id=cid)
+            results = []
+
+            parties = party.objects.all()
+
+            if parties.exists():
+              for part in parties:
+                sale_amount = SalesInvoice.objects.filter(party_name=part.party_name).aggregate(total=Sum('grandtotal'))['total'] or 0
+                purchase_amount = PurchaseBill.objects.filter(party=part).aggregate(total=Sum('grandtotal'))['total'] or 0
+                results.append({
+                    'party_name': part.party_name,
+                    'sale_amount': sale_amount,
+                    'purchase_amount': purchase_amount,
+                })
+            else:
+                results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+            total_sale_amount = int(sum(result['sale_amount'] for result in results))
+            total_purchase_amount = int(sum(result['purchase_amount'] for result in results))
+            context={'staff':staff,'parties':results,'totalS':total_sale_amount,'totalP':total_purchase_amount}
+          cmp = company.objects.get(id=cid)
+          template_path = 'company/sale_purchaseby_party_pdf.html'
+          template = get_template(template_path)
+
+          html  = template.render(context)
+          result = BytesIO()
+          pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)#, link_callback=fetch_resources)
+          pdf = result.getvalue()
+          filename = f'Sales Purchase By party - .pdf'
+          subject = f"Sales Purchase By party - "
+          email = EmailMessage(subject, f"Hi,\nPlease find the attached Sales Purchase By party report . \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+          email.attach(filename, pdf, "application/pdf")
+          email.send(fail_silently=False)
+
+          messages.success(request, 'Report has been shared via email successfully..!')
+          return redirect('sale_purchaseby_party')
+  except Exception as e:
+      print(e)
+      messages.error(request, f'{e}')
+      return redirect('sale_purchaseby_party')        
+
+def sale_order_item(request):
+  sid = request.session.get('staff_id')
+  staff =  staff_details.objects.get(id=sid)
+  cid= staff.company.id
+  items=ItemModel.objects.filter(company_id=cid)
+  results = []
+
+  if items.exists():
+    for part in items:
+      qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
+      price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
+      results.append({
+          'item_name': part.item_name,
+          'Quantity': qty,
+          'Price': price,
+      })
+  else:
+    results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
+  total_Q = int(sum(result['Quantity'] for result in results))
+  total_P = int(sum(result['Price'] for result in results))
+  return render(request,'company/sale_order_item.html',{'staff':staff,'items':results,'totalQ':total_Q,'totalP':total_P})
+
+
+def sale_order_item_filter(request):
   if request.method == 'GET':
     from_date = request.GET.get('startD')
     to_date = request.GET.get('endD')
@@ -10000,15 +10116,97 @@ def your_view2(request):
         qty = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('qty'))['total'] or 0
         price = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('price'))['total'] or 0
         results.append({
-            'party_name': part.item_name,
-            'sale_amount': qty,
-            'purchase_amount': price,
+            'item_name': part.item_name,
+            'Quantity': qty,
+            'Price': price,
         })
     else:
-      results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
+      results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
     print(results)
     return JsonResponse({'parties': results})
   else:
     return HttpResponse(status=400)
   
 
+def sharesaleorderitemToEmail(request):
+  try:
+    if request.method == 'POST':
+        emails_string = request.POST['email']
+        emails_list = [email.strip() for email in emails_string.split(',')]
+        email_message = request.POST['message']
+        fromdate_str = request.POST['from_date']
+        todate_str = request.POST['to_date']
+        if fromdate_str and todate_str:
+          date_obj1 = datetime.strptime(fromdate_str, '%a %b %d %Y')
+          date_obj2 = datetime.strptime(todate_str, '%a %b %d %Y')
+          startD = date_obj1.strftime("%Y-%m-%d")
+          toD=date_obj2.strftime("%Y-%m-%d")
+          print(startD)
+          print(toD)
+          sid = request.session.get('staff_id')
+          staff =  staff_details.objects.get(id=sid)
+          cid= staff.company.id
+          items=ItemModel.objects.filter(company_id=cid)
+          results = []
+          if items.exists():
+            for part in items:
+              qty = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('qty'))['total'] or 0
+              price = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('price'))['total'] or 0
+              results.append({
+                  'item_name': part.item_name,
+                  'Quantity': qty,
+                  'Price': price,
+              })
+          else:
+            results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
+
+          startDate=date_obj1.strftime("%m-%d-%Y")
+          endDate=date_obj2.strftime("%m-%d-%Y")
+          st=startDate+' '+'To'+' '+endDate
+          total_Q = int(sum(result['Quantity'] for result in results))
+          total_P = int(sum(result['Price'] for result in results))
+          context = {'staff':staff,'parties':results,'totalQ':total_Q,'totalP':total_P,'from':st}
+        else:
+          # print(emails_list)
+          sid = request.session.get('staff_id')
+          staff =  staff_details.objects.get(id=sid)
+          cid= staff.company.id
+          items=ItemModel.objects.filter(company_id=cid)
+          results = []
+
+          if items.exists():
+            for part in items:
+              qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
+              price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
+              results.append({
+                  'item_name': part.item_name,
+                  'Quantity': qty,
+                  'Price': price,
+              })
+          else:
+            results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
+          total_Q = int(sum(result['Quantity'] for result in results))
+          total_P = int(sum(result['Price'] for result in results))
+          context={'staff':staff,'parties':results,'totalQ':total_Q,'totalP':total_P}
+        cmp = company.objects.get(id=cid)
+        template_path = 'company/sale_order_item_pdf.html'
+        template = get_template(template_path)
+
+        html  = template.render(context)
+        result = BytesIO()
+        pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)#, link_callback=fetch_resources)
+        pdf = result.getvalue()
+        filename = f'Sale Order item Report - .pdf'
+        subject = f"Sale Order item Report - "
+        email = EmailMessage(subject, f"Hi,\nPlease find the attached Sale Order item Report . \n{email_message}\n\n--\nRegards,\n{cmp.company_name}\n{cmp.address}\n{cmp.state} - {cmp.country}\n{cmp.contact}", from_email=settings.EMAIL_HOST_USER, to=emails_list)
+        email.attach(filename, pdf, "application/pdf")
+        email.send(fail_silently=False)
+
+        messages.success(request, 'Report has been shared via email successfully..!')
+        return redirect('sale_order_item')
+  except Exception as e:
+      print(e)
+      messages.error(request, f'{e}')
+      return redirect('sale_order_item')
+  
+#=====================================Anitta End==============================================================================================
