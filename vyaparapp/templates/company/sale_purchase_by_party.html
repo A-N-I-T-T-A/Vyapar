@@ -391,12 +391,49 @@
                     console.log(this)
                 }
             });
+            sum1 = 0;
+            sum2 = 0;
+            $("#myTable tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+
+            $("#myTable1 tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+            $("#sale").text(sum2);
+            $("#purchase").text(sum1);
+            $("#sale1").text(sum2);
+            $("#purchase1").text(sum1);
         }
 
         $('.clear-filter').on('click', function () {
             $('#myTable tbody tr').show();
             $(this).siblings('.filter-value').val('');
+            sum1 = 0;
+            sum2 = 0;
+            $("#myTable tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
 
+            $("#myTable1 tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+            $("#sale").text(sum2);
+            $("#purchase").text(sum1);
+            $("#sale1").text(sum2);
+            $("#purchase1").text(sum1);
             // Close the filter dropdown
             // $(this).closest('.filter-dropdown').hide();
         });
@@ -425,12 +462,50 @@
                     console.log(this)
                 }
             });
+            sum1 = 0;
+            sum2 = 0;
+            $("#myTable tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+
+            $("#myTable1 tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+            $("#sale").text(sum2);
+            $("#purchase").text(sum1);
+            $("#sale1").text(sum2);
+            $("#purchase1").text(sum1);
         }
 
         $('.clear-filter').on('click', function () {
-            $('#myTable tbody tr').show();
+            $('#myTable1 tbody tr').show();
             $(this).siblings('.filter-value').val('');
             window.reload();
+            sum1 = 0;
+            sum2 = 0;
+            $("#myTable tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+
+            $("#myTable1 tbody tr:visible").each(function() {
+                var value = parseInt($(this).find("td:eq(3)").text());
+                sum1 += isNaN(value) ? 0 : value;
+                var value = parseInt($(this).find("td:eq(2)").text());
+                sum2 += isNaN(value) ? 0 : value;
+            });
+            $("#sale").text(sum2);
+            $("#purchase").text(sum1);
+            $("#sale1").text(sum2);
+            $("#purchase1").text(sum1);
             // Close the filter dropdown
             // $(this).closest('.filter-dropdown').hide();
         });
@@ -454,6 +529,25 @@ jQuery(document).ready(function ($) {
             $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
           
         });
+        sum1 = 0;
+        sum2 = 0;
+        $("#myTable tbody tr:visible").each(function() {
+            var value = parseInt($(this).find("td:eq(3)").text());
+            sum1 += isNaN(value) ? 0 : value;
+            var value = parseInt($(this).find("td:eq(2)").text());
+            sum2 += isNaN(value) ? 0 : value;
+        });
+
+        $("#myTable1 tbody tr:visible").each(function() {
+            var value = parseInt($(this).find("td:eq(3)").text());
+            sum1 += isNaN(value) ? 0 : value;
+            var value = parseInt($(this).find("td:eq(2)").text());
+            sum2 += isNaN(value) ? 0 : value;
+        });
+        $("#sale").text(sum2);
+        $("#purchase").text(sum1);
+        $("#sale1").text(sum2);
+        $("#purchase1").text(sum1);
        
     });
    
@@ -530,8 +624,8 @@ $('#in1').on('change', function () {
         $.each(parties, function(i, party) {
             i=i+1
             var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total3=total1+party.sale_amount;
-            total4=total2+party.purchase_amount;
+            total3=total3+party.sale_amount;
+            total4=total4+party.purchase_amount;
             
             $('#myTable1 tbody').append(newRow);
         });
@@ -596,8 +690,8 @@ $('#in2').on('change', function () {
         $.each(parties, function(i, party) {
             i=i+1
             var newRow = $('<tr><td>'+i + '</td><td>' + party.party_name+ '</td><td>' + party.sale_amount + '</td><td>' + party.purchase_amount + '</td></tr>');
-            total3=total1+party.sale_amount;
-            total4=total2+party.purchase_amount;
+            total3=total3+party.sale_amount;
+            total4=total4+party.purchase_amount;
             
             $('#myTable1 tbody').append(newRow);
         });

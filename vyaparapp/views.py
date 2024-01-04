@@ -9938,13 +9938,23 @@ def sale_purchaseby_party(request):
 
   if parties.exists():
     for part in parties:
-      sale_amount = SalesInvoice.objects.filter(party_name=part.party_name).aggregate(total=Sum('grandtotal'))['total'] or 0
-      purchase_amount = PurchaseBill.objects.filter(party=part).aggregate(total=Sum('grandtotal'))['total'] or 0
-      results.append({
-          'party_name': part.party_name,
-          'sale_amount': sale_amount,
-          'purchase_amount': purchase_amount,
-      })
+      sales=SalesInvoice.objects.filter(party_name=part.party_name)
+      pur=PurchaseBill.objects.filter(party=part)
+      if sales.exists():
+        sale_amount = SalesInvoice.objects.filter(party_name=part.party_name).aggregate(total=Sum('grandtotal'))['total'] or 0
+        purchase_amount = PurchaseBill.objects.filter(party=part).aggregate(total=Sum('grandtotal'))['total'] or 0
+        results.append({
+            'party_name': part.party_name,
+            'sale_amount': sale_amount,
+            'purchase_amount': purchase_amount,
+        })
+      elif pur.exists():
+        purchase_amount = PurchaseBill.objects.filter(party=part).aggregate(total=Sum('grandtotal'))['total'] or 0
+        results.append({
+            'party_name': part.party_name,
+            'sale_amount': 0,
+            'purchase_amount': purchase_amount,
+        })
   else:
       results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
   total_sale_amount = int(sum(result['sale_amount'] for result in results))
@@ -9971,13 +9981,23 @@ def sale_purchaseby_party_filter(request):
 
     if parties.exists():
       for part in parties:
-        sale_amount = SalesInvoice.objects.filter(party_name=part.party_name,date__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
-        purchase_amount = PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
-        results.append({
-            'party_name': part.party_name,
-            'sale_amount': sale_amount,
-            'purchase_amount': purchase_amount,
-      })
+        sales=SalesInvoice.objects.filter(party_name=part.party_name,date__range=(startD, toD))
+        pur=PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD))
+        if sales.exists():
+          sale_amount = SalesInvoice.objects.filter(party_name=part.party_name,date__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+          purchase_amount = PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+          results.append({
+              'party_name': part.party_name,
+              'sale_amount': sale_amount,
+              'purchase_amount': purchase_amount,
+          })
+        elif pur.exists():
+          purchase_amount = PurchaseBill.objects.filter(party=part, billdate__range=(startD, toD)).aggregate(total=Sum('grandtotal'))['total'] or 0
+          results.append({
+              'party_name': part.party_name,
+              'sale_amount': 0,
+              'purchase_amount': purchase_amount,
+          })
     else:
       results = [{'party_name': '', 'sale_amount': 0, 'purchase_amount': 0}]
 
@@ -10082,13 +10102,15 @@ def sale_order_item(request):
 
   if items.exists():
     for part in items:
-      qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
-      price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
-      results.append({
-          'item_name': part.item_name,
-          'Quantity': qty,
-          'Price': price,
-      })
+      saleitems= sales_item.objects.filter(product_id=part.id)
+      if saleitems.exists():
+        qty = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('qty'))['total'] or 0
+        price = sales_item.objects.filter(product_id=part.id).aggregate(total=Sum('price'))['total'] or 0
+        results.append({
+            'item_name': part.item_name,
+            'Quantity': qty,
+            'Price': price,
+        })
   else:
     results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
   total_Q = int(sum(result['Quantity'] for result in results))
@@ -10113,13 +10135,15 @@ def sale_order_item_filter(request):
     results = []
     if items.exists():
       for part in items:
-        qty = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('qty'))['total'] or 0
-        price = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('price'))['total'] or 0
-        results.append({
-            'item_name': part.item_name,
-            'Quantity': qty,
-            'Price': price,
-        })
+        saleitems= sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD))
+        if saleitems.exists():
+          qty = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('qty'))['total'] or 0
+          price = sales_item.objects.filter(product_id=part.id,sale_order__orderdate__range=(startD, toD)).aggregate(total=Sum('price'))['total'] or 0
+          results.append({
+              'item_name': part.item_name,
+              'Quantity': qty,
+              'Price': price,
+          })
     else:
       results = [{'item_name': '', 'Quantity': 0, 'Price': 0}]
     print(results)
@@ -10136,6 +10160,11 @@ def sharesaleorderitemToEmail(request):
         email_message = request.POST['message']
         fromdate_str = request.POST['from_date']
         todate_str = request.POST['to_date']
+        fvalue=request.POST['fvalue']
+        if fvalue is not None:
+          print('Value:',fvalue)
+        else:
+          print('Value: None')
         if fromdate_str and todate_str:
           date_obj1 = datetime.strptime(fromdate_str, '%a %b %d %Y')
           date_obj2 = datetime.strptime(todate_str, '%a %b %d %Y')
