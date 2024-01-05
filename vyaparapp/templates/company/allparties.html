@@ -131,6 +131,7 @@
                           {% csrf_token %}
                           <input type="hidden" name="from_date" id="from_date" value="">
                           <input type="hidden" name="to_date" id="to_date" value="">
+                          <input type="hidden" name="fvalue" id="fvalue" value="">
                           <div class="form-group">
                               <lable>Mail id</lable>
                               <textarea class="form-control text-dark" name="email" id="email" rows="5"
@@ -139,7 +140,7 @@
                           <div class="form-group">
                               <lable>Message</lable>
                               <textarea name="message" id="message" class="text-dark form-control" cols=""
-                              rows="4" placeholder="This message will be sent along with purchase order details."></textarea>
+                              rows="4" placeholder="This message will be sent along with all parties details."></textarea>
                           </div>
                           <button type="submit" class=" btn  btn-primary mx-auto d-block mt-4">Share</button>
                         </form>
@@ -481,19 +482,24 @@
 
         function applyEqualToFilter($table, columnIndex, filterValue) {
             console.log("filter");
+            let secondColumnValue = [];
             $table.find(`tbody tr td:nth-child(${columnIndex + 1})`).each(function () {
                 const cellValue = $(this).text().trim();
                 if (cellValue === filterValue) {
                     $(this).parent().show();
                     console.log(this)
+                    secondColumnValue.push($(this).parent().find('td:nth-child(2)').text().trim());
                 }
             });
+            console.log(secondColumnValue)
+            let strings = document.getElementById("fvalue");
+            strings.value = secondColumnValue.join(', ');
         }
 
         $('.clear-filter').on('click', function () {
             $('#myTable tbody tr').show();
             $(this).siblings('.filter-value').val('');
-
+            document.getElementById("fvalue").value = '';
             // Close the filter dropdown
             // $(this).closest('.filter-dropdown').hide();
         });
@@ -515,19 +521,25 @@
 
         function applyEqualToFilter($table, columnIndex, filterValue) {
             console.log("filter");
+            let secondColumnValue = [];
             $table.find(`tbody tr td:nth-child(${columnIndex + 1})`).each(function () {
                 const cellValue = $(this).text().trim();
                 if (cellValue === filterValue) {
                     $(this).parent().show();
                     console.log(this)
+                    secondColumnValue.push($(this).parent().find('td:nth-child(2)').text().trim());
                 }
             });
+            console.log(secondColumnValue)
+            let strings = document.getElementById("fvalue");
+            strings.value = secondColumnValue.join(', ');
         }
 
         $('.clear-filter').on('click', function () {
             $('#myTable1 tbody tr').show();
             $(this).siblings('.filter-value').val('');
             window.reload();
+            document.getElementById("fvalue").value = '';
             // Close the filter dropdown
             // $(this).closest('.filter-dropdown').hide();
         });
@@ -551,6 +563,26 @@ jQuery(document).ready(function ($) {
             $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
           
         });
+        let secondColumnValue = [];
+        $("#myTable tbody tr").each(function () {
+            $(this).find("td").each(function (columnIndex) {
+                var tdValue = $(this).text().toLowerCase();
+                if (tdValue.indexOf(value) > -1) {
+                    $(this).closest('tr').show(); // show the row if value is found
+                    console.log('Value found in column:', columnIndex);
+                    secondColumnValue.push($(this).parent().find('td:nth-child(2)').text().trim());
+                    
+                    return false; // break out of the inner loop once value is found
+                }
+            });
+        });
+        console.log("Second column value: ", secondColumnValue);
+        if (value ==''){
+            document.getElementById("fvalue").value ='';
+        }else{
+            let strings = document.getElementById("fvalue");
+            strings.value = secondColumnValue.join(', ');
+        }
        
     });
    
